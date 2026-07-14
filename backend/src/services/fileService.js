@@ -1,6 +1,8 @@
 const fileModel = require('../models/fileModel');
 const folderModel = require('../models/folderModel');
 const cloudinaryService = require('./cloudinaryService');
+const userModel = require('../models/userModel');
+const activityService = require('./activityService');
 const ApiError = require('../utils/ApiError');
 
 const getFileTypeAndExtension = (originalName, mimetype) => {
@@ -22,6 +24,13 @@ const uploadFile = async (ownerId, file, folderId = null) => {
     }
   }
 
+  const user = await userModel.findById(ownerId);
+  if (!user) throw new ApiError(404, 'User not found');
+  
+  if (user.storage_used_bytes + file.size > user.storage_limit_bytes) {
+    throw new ApiError(400, 'Storage limit exceeded');
+  }
+
   const { extension, resourceType } = getFileTypeAndExtension(file.originalname, file.mimetype);
 
   // Upload to Cloudinary
@@ -41,6 +50,9 @@ const uploadFile = async (ownerId, file, folderId = null) => {
     cloudinary_public_id: uploadResult.public_id,
     cloudinary_url: uploadResult.secure_url,
   });
+
+  await userModel.updateStorageUsed(ownerId, file.size);
+  await activityService.logUserActivity(ownerId, 'file.upload', 'file', fileRecord.id, { size: file.size, name: file.originalname });
 
   return fileRecord;
 };
@@ -82,6 +94,7 @@ const renameFile = async (fileId, ownerId, newName) => {
   }
 
   const updatedFile = await fileModel.updateFile(fileId, ownerId, newName);
+  await activityService.logUserActivity(ownerId, 'file.rename', 'file', fileId, { oldName: file.original_name, newName });
   return updatedFile;
 };
 
@@ -98,6 +111,8 @@ const deleteFile = async (fileId, ownerId) => {
 
   await cloudinaryService.deleteFromCloudinary(file.cloudinary_public_id, resourceType);
   await fileModel.deleteFile(fileId, ownerId);
+  await userModel.updateStorageUsed(ownerId, -file.size_bytes);
+  await activityService.logUserActivity(ownerId, 'file.delete', 'file', fileId, { name: file.original_name });
 };
 
 const previewFile = async (fileId, ownerId) => {
@@ -105,6 +120,8 @@ const previewFile = async (fileId, ownerId) => {
   if (!file) {
     throw new ApiError(404, 'File not found');
   }
+
+  await activityService.logUserActivity(ownerId, 'file.download', 'file', fileId, { name: file.original_name });
 
   return {
     url: file.cloudinary_url,

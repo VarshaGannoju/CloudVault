@@ -12,7 +12,9 @@ router.use('/profile', profileRoutes);
 router.use('/folders', folderRoutes);
 router.use('/files', fileRoutes);
 // router.use('/users', require('./user.routes'));
-// router.use('/share', require('./share.routes'));
+router.use('/share', require('./share.routes'));
+router.use('/analytics', require('./analytics.routes'));
+router.use('/activities', require('./activity.routes'));
 // router.use('/admin', require('./admin.routes'));
 
 router.get('/', (req, res) => {

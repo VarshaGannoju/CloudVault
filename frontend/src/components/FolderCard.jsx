@@ -1,8 +1,8 @@
 import React from 'react';
 import { Dropdown } from 'react-bootstrap';
-import { FiFolder, FiMoreVertical, FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { FiFolder, FiMoreVertical, FiEdit2, FiTrash2, FiShare2 } from 'react-icons/fi';
 
-export default function FolderCard({ folder, onNavigate, onRename, onDelete }) {
+export default function FolderCard({ folder, onNavigate, onRename, onDelete, onShare }) {
   return (
     <div 
       className="cloud-card interactive d-flex flex-column h-100 p-3 cursor-pointer"
@@ -27,6 +27,11 @@ export default function FolderCard({ folder, onNavigate, onRename, onDelete }) {
             <Dropdown.Item onClick={() => onRename(folder)} className="d-flex align-items-center gap-2">
               <FiEdit2 /> Rename
             </Dropdown.Item>
+            {onShare && (
+              <Dropdown.Item onClick={() => onShare(folder)} className="d-flex align-items-center gap-2">
+                <FiShare2 /> Share
+              </Dropdown.Item>
+            )}
             <Dropdown.Divider />
             <Dropdown.Item onClick={() => onDelete(folder)} className="d-flex align-items-center gap-2 text-danger">
               <FiTrash2 /> Delete

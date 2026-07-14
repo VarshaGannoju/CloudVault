@@ -7,7 +7,9 @@ import FileCard from '../components/FileCard';
 import Loading from '../components/Loading';
 import ErrorMessage from '../components/ErrorMessage';
 import UploadModal from '../components/UploadModal';
+import ShareModal from '../components/ShareModal';
 import { Modal, Button, Form } from 'react-bootstrap';
+import toast from 'react-hot-toast';
 
 export default function Folders() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -24,6 +26,19 @@ export default function Folders() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [showUploadModal, setShowUploadModal] = useState(false);
+
+  // Folder actions
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [folderToRename, setFolderToRename] = useState(null);
+  const [folderNewName, setFolderNewName] = useState('');
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [folderToDelete, setFolderToDelete] = useState(null);
+
+  // Share Modal
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [itemToShare, setItemToShare] = useState(null);
+  const [itemTypeToShare, setItemTypeToShare] = useState('folders');
 
   const fetchContents = async () => {
     try {
@@ -42,7 +57,8 @@ export default function Folders() {
       } else {
         setCurrentFolder(null);
       }
-    } catch (_err) {
+    } catch (err) {
+      console.error(err);
       setError('Failed to fetch folder contents.');
     } finally {
       setLoading(false);
@@ -61,9 +77,38 @@ export default function Folders() {
       await api.post('/folders', { name: newFolderName.trim(), parentId });
       setNewFolderName('');
       setShowCreateModal(false);
+      toast.success('Folder created successfully');
       fetchContents();
-    } catch (_err) {
-      alert('Failed to create folder');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to create folder');
+    }
+  };
+
+  const handleRenameFolder = async (e) => {
+    e.preventDefault();
+    if (!folderNewName.trim() || !folderToRename) return;
+    try {
+      await api.put(`/folders/${folderToRename.id}`, { name: folderNewName.trim() });
+      setShowRenameModal(false);
+      toast.success('Folder renamed successfully');
+      fetchContents();
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to rename folder');
+    }
+  };
+
+  const handleDeleteFolder = async () => {
+    if (!folderToDelete) return;
+    try {
+      await api.delete(`/folders/${folderToDelete.id}`);
+      setShowDeleteModal(false);
+      toast.success('Folder deleted successfully');
+      fetchContents();
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to delete folder');
     }
   };
 
@@ -131,8 +176,9 @@ export default function Folders() {
                       key={folder.id} 
                       folder={folder} 
                       onNavigate={handleNavigate}
-                      onRename={() => {}}
-                      onDelete={() => {}}
+                      onRename={(f) => { setFolderToRename(f); setFolderNewName(f.name); setShowRenameModal(true); }}
+                      onDelete={(f) => { setFolderToDelete(f); setShowDeleteModal(true); }}
+                      onShare={(f) => { setItemToShare(f); setItemTypeToShare('folders'); setShowShareModal(true); }}
                     />
                   ))}
                 </div>
@@ -148,9 +194,10 @@ export default function Folders() {
                       key={file.id} 
                       file={file} 
                       onDownload={(f) => window.open(f.cloudinary_url, '_blank')}
-                      onRename={() => {}}
+                      onRename={() => {}} // Usually file operations handled in Files page or here if needed
                       onDelete={() => {}}
                       onPreview={() => {}}
+                      onShare={(f) => { setItemToShare(f); setItemTypeToShare('files'); setShowShareModal(true); }}
                     />
                   ))}
                 </div>
@@ -192,6 +239,55 @@ export default function Folders() {
         currentFolderId={parentId}
         onSuccess={fetchContents} 
       />
+
+      {/* Rename Modal */}
+      <Modal show={showRenameModal} onHide={() => setShowRenameModal(false)} centered>
+        <Form onSubmit={handleRenameFolder}>
+          <Modal.Header closeButton className="border-0 pb-0">
+            <Modal.Title className="fs-5 fw-bold">Rename Folder</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form.Group>
+              <Form.Label className="fw-medium">New Name</Form.Label>
+              <Form.Control 
+                type="text" 
+                value={folderNewName} 
+                onChange={(e) => setFolderNewName(e.target.value)} 
+                required 
+                autoFocus 
+              />
+            </Form.Group>
+          </Modal.Body>
+          <Modal.Footer className="border-0 pt-0">
+            <Button variant="light" onClick={() => setShowRenameModal(false)}>Cancel</Button>
+            <Button variant="primary" type="submit">Rename</Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
+
+      {/* Delete Modal */}
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+        <Modal.Header closeButton className="border-0 pb-0">
+          <Modal.Title className="fs-5 fw-bold text-danger">Delete Folder</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to delete <span className="fw-bold">{folderToDelete?.name}</span>? This action cannot be undone.
+        </Modal.Body>
+        <Modal.Footer className="border-0 pt-0">
+          <Button variant="light" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+          <Button variant="danger" onClick={handleDeleteFolder}>Delete</Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Share Modal */}
+      {itemToShare && (
+        <ShareModal 
+          show={showShareModal} 
+          onHide={() => setShowShareModal(false)} 
+          item={itemToShare} 
+          itemType={itemTypeToShare} 
+        />
+      )}
 
     </div>
   );

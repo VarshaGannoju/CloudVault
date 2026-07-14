@@ -7,8 +7,7 @@ const AuthContext = createContext(null);
 /**
  * Provides global authentication state (current user, loading status)
  * and auth actions (login, logout, register) to the whole app.
- * Auth API calls will be fully wired up in a later step once the
- * backend auth routes exist.
+ * and auth actions (login, logout, register) to the whole app.
  */
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -22,7 +21,7 @@ export function AuthProvider({ children }) {
     }
     try {
       const { data } = await api.get('/profile');
-      setUser(data.user);
+      setUser(data.data || data.user); // handle both { data: {...} } and { user: {...} }
     } catch {
       localStorage.removeItem('accessToken');
       setUser(null);
@@ -38,8 +37,8 @@ export function AuthProvider({ children }) {
   const login = async (credentials) => {
     const { data } = await api.post('/auth/login', credentials);
     localStorage.setItem('accessToken', data.accessToken);
-    setUser(data.user);
-    return data.user;
+    setUser(data.data); // backend returns { success, data: {...user...}, accessToken }
+    return data.data;
   };
 
   const register = async (payload) => {

@@ -6,7 +6,9 @@ import FileCard from '../components/FileCard';
 import Loading from '../components/Loading';
 import ErrorMessage from '../components/ErrorMessage';
 import UploadModal from '../components/UploadModal';
+import ShareModal from '../components/ShareModal';
 import { Modal, Button, Form } from 'react-bootstrap';
+import toast from 'react-hot-toast';
 
 export default function Files() {
   const [searchParams] = useSearchParams();
@@ -30,6 +32,10 @@ export default function Files() {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [fileToPreview, setFileToPreview] = useState(null);
 
+  // Share Modal
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [fileToShare, setFileToShare] = useState(null);
+
   const fetchFiles = async () => {
     try {
       setLoading(true);
@@ -41,7 +47,8 @@ export default function Files() {
 
       const { data } = await api.get(endpoint);
       setFiles(data.files || []);
-    } catch (_err) {
+    } catch (err) {
+      console.error(err);
       setError('Failed to fetch files.');
     } finally {
       setLoading(false);
@@ -63,9 +70,11 @@ export default function Files() {
     try {
       await api.put(`/files/${fileToRename.id}`, { name: newName.trim() });
       setShowRenameModal(false);
+      toast.success('File renamed successfully');
       fetchFiles();
-    } catch (_err) {
-      alert('Failed to rename file');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to rename file');
     }
   };
 
@@ -74,9 +83,11 @@ export default function Files() {
     try {
       await api.delete(`/files/${fileToDelete.id}`);
       setShowDeleteModal(false);
+      toast.success('File deleted successfully');
       fetchFiles();
-    } catch (_err) {
-      alert('Failed to delete file');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to delete file');
     }
   };
 
@@ -118,6 +129,7 @@ export default function Files() {
                 onRename={(f) => { setFileToRename(f); setNewName(f.original_name); setShowRenameModal(true); }}
                 onDelete={(f) => { setFileToDelete(f); setShowDeleteModal(true); }}
                 onPreview={(f) => { setFileToPreview(f); setShowPreviewModal(true); }}
+                onShare={(f) => { setFileToShare(f); setShowShareModal(true); }}
               />
             ))}
           </div>
@@ -185,6 +197,16 @@ export default function Files() {
           )}
         </Modal.Body>
       </Modal>
+
+      {/* Share Modal */}
+      {fileToShare && (
+        <ShareModal 
+          show={showShareModal} 
+          onHide={() => setShowShareModal(false)} 
+          item={fileToShare} 
+          itemType="files" 
+        />
+      )}
 
     </div>
   );

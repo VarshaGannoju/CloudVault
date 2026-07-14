@@ -67,7 +67,7 @@ const refreshAccessToken = async (refreshToken) => {
   let decoded;
   try {
     decoded = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET || 'testrefresh');
-  } catch (_error) {
+  } catch {
     throw new ApiError(401, 'Not authorized, token failed');
   }
 

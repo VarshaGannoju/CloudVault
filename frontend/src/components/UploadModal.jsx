@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Modal, Button, ProgressBar } from 'react-bootstrap';
 import { FiUploadCloud, FiX } from 'react-icons/fi';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 
 export default function UploadModal({ show, onHide, currentFolderId, onSuccess }) {
   const [dragActive, setDragActive] = useState(false);
@@ -66,10 +67,12 @@ export default function UploadModal({ show, onHide, currentFolderId, onSuccess }
         }
       });
       setFiles([]);
+      toast.success('Files uploaded successfully');
       onSuccess();
       onHide();
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to upload files.');
+      toast.error('Failed to upload files');
     } finally {
       setUploading(false);
     }

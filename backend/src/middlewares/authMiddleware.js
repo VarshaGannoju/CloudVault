@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { env } = require('../config/env');
-const { ApiError } = require('../utils/ApiError');
+const ApiError = require('../utils/ApiError');
 const asyncHandler = require('../utils/asyncHandler');
 const { findById } = require('../models/userModel');
 

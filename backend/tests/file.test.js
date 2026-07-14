@@ -12,6 +12,15 @@ jest.mock('../src/services/cloudinaryService', () => ({
   deleteFromCloudinary: jest.fn(),
 }));
 
+jest.mock('../src/services/activityService', () => ({
+  logUserActivity: jest.fn(),
+}));
+
+jest.mock('../src/models/userModel', () => ({
+  findById: jest.fn(),
+  updateStorageUsed: jest.fn(),
+}));
+
 const mockUser = {
   id: 'a1b2c3d4-e5f6-7890-1234-56789abcdef0',
   name: 'Test User',

@@ -6,6 +6,10 @@ jest.mock('../src/config/db', () => ({
   query: jest.fn(),
 }));
 
+jest.mock('../src/services/activityService', () => ({
+  logUserActivity: jest.fn(),
+}));
+
 const mockUser = {
   id: 'a1b2c3d4-e5f6-7890-1234-56789abcdef0',
   name: 'Test User',

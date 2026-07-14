@@ -50,6 +50,14 @@ const updateProfile = async (id, name, avatar_url) => {
   return result.rows[0];
 };
 
+const updateStorageUsed = async (id, bytesChange) => {
+  const result = await db.query(
+    'UPDATE users SET storage_used_bytes = storage_used_bytes + $1 WHERE id = $2 RETURNING *',
+    [bytesChange, id]
+  );
+  return result.rows[0];
+};
+
 module.exports = {
   createUser,
   findByEmail,
@@ -58,4 +66,5 @@ module.exports = {
   verifyEmail,
   updatePassword,
   updateProfile,
+  updateStorageUsed,
 };

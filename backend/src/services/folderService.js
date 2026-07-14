@@ -1,4 +1,5 @@
 const folderModel = require('../models/folderModel');
+const activityService = require('./activityService');
 const ApiError = require('../utils/ApiError');
 
 const createFolder = async (ownerId, name, parentId = null) => {
@@ -10,6 +11,7 @@ const createFolder = async (ownerId, name, parentId = null) => {
   }
 
   const folder = await folderModel.createFolder(ownerId, name, parentId);
+  await activityService.logUserActivity(ownerId, 'folder.create', 'folder', folder.id, { name });
   return folder;
 };
 
@@ -40,6 +42,7 @@ const renameFolder = async (folderId, ownerId, newName) => {
   }
 
   const updated = await folderModel.updateFolder(folderId, ownerId, newName);
+  await activityService.logUserActivity(ownerId, 'folder.rename', 'folder', folderId, { oldName: folder.name, newName });
   return updated;
 };
 
@@ -51,6 +54,7 @@ const deleteFolder = async (folderId, ownerId) => {
 
   // Soft delete for now
   await folderModel.trashFolder(folderId, ownerId);
+  await activityService.logUserActivity(ownerId, 'folder.delete', 'folder', folderId, { name: folder.name });
 };
 
 module.exports = {

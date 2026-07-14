@@ -1,8 +1,8 @@
 import React from 'react';
 import { Dropdown } from 'react-bootstrap';
-import { FiMoreVertical, FiDownload, FiEdit2, FiTrash2, FiEye, FiImage, FiFileText, FiFile } from 'react-icons/fi';
+import { FiMoreVertical, FiDownload, FiEdit2, FiTrash2, FiEye, FiImage, FiFileText, FiFile, FiShare2 } from 'react-icons/fi';
 
-export default function FileCard({ file, onDownload, onRename, onDelete, onPreview }) {
+export default function FileCard({ file, onDownload, onRename, onDelete, onPreview, onShare }) {
   const formatSize = (bytes) => {
     if (bytes === 0) return '0 B';
     const k = 1024;
@@ -41,6 +41,11 @@ export default function FileCard({ file, onDownload, onRename, onDelete, onPrevi
             <Dropdown.Item onClick={() => onRename(file)} className="d-flex align-items-center gap-2">
               <FiEdit2 /> Rename
             </Dropdown.Item>
+            {onShare && (
+              <Dropdown.Item onClick={() => onShare(file)} className="d-flex align-items-center gap-2">
+                <FiShare2 /> Share
+              </Dropdown.Item>
+            )}
             <Dropdown.Divider />
             <Dropdown.Item onClick={() => onDelete(file)} className="d-flex align-items-center gap-2 text-danger">
               <FiTrash2 /> Delete
