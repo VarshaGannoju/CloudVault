@@ -75,6 +75,15 @@ export default function Dashboard() {
       legend: { position: 'top' },
       title: { display: true, text: 'Uploads Over Time' },
     },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 1,
+          precision: 0
+        }
+      }
+    }
   };
 
   const lineChartData = {
