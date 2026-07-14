@@ -3,7 +3,7 @@ const folderModel = require('../models/folderModel');
 const cloudinaryService = require('./cloudinaryService');
 const userModel = require('../models/userModel');
 const activityService = require('./activityService');
-const ApiError = require('../utils/ApiError');
+const { ApiError } = require('../utils/ApiError');
 
 const getFileTypeAndExtension = (originalName, mimetype) => {
   const parts = originalName.split('.');

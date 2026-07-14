@@ -1,7 +1,7 @@
 const asyncHandler = require('../utils/asyncHandler');
 const shareService = require('../services/shareService');
 const shareModel = require('../models/shareModel');
-const ApiError = require('../utils/ApiError');
+const { ApiError } = require('../utils/ApiError');
 
 const shareFile = asyncHandler(async (req, res) => {
   const userId = req.user.id;

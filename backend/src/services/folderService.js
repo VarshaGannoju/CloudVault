@@ -1,6 +1,6 @@
 const folderModel = require('../models/folderModel');
 const activityService = require('./activityService');
-const ApiError = require('../utils/ApiError');
+const { ApiError } = require('../utils/ApiError');
 
 const createFolder = async (ownerId, name, parentId = null) => {
   if (parentId) {

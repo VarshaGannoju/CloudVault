@@ -6,9 +6,9 @@ const uploadBufferToCloudinary = (buffer, options = {}) => {
   if (!env.CLOUDINARY_API_KEY || env.CLOUDINARY_API_KEY === 'your_api_key') {
     console.warn('NOTE: Cloudinary API key is not configured. Mocking file upload.');
     return Promise.resolve({
-      secure_url: 'data:text/plain;base64,VGhpcyBpcyBhIG1vY2sgZmlsZSB1cGxvYWRlZCBsb2NhbGx5IHdpdGhvdXQgQ2xvdWRpbmFyeSBjcmVkZW50aWFscy4=',
+      secure_url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
       public_id: 'mock_public_id_' + Date.now(),
-      format: 'txt',
+      format: 'pdf',
       resource_type: 'raw',
     });
   }

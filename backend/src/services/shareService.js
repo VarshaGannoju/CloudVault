@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const shareModel = require('../models/shareModel');
 const fileModel = require('../models/fileModel');
 const folderModel = require('../models/folderModel');
-const ApiError = require('../utils/ApiError');
+const { ApiError } = require('../utils/ApiError');
 
 const generatePublicToken = () => {
   return crypto.randomBytes(32).toString('hex');

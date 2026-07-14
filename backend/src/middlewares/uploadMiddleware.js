@@ -1,5 +1,5 @@
 const multer = require('multer');
-const ApiError = require('../utils/ApiError');
+const { ApiError } = require('../utils/ApiError');
 
 // Store files in memory so they can be processed or uploaded to Cloudinary
 const storage = multer.memoryStorage();

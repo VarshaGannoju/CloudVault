@@ -1,6 +1,6 @@
 const asyncHandler = require('../utils/asyncHandler');
 const fileService = require('../services/fileService');
-const ApiError = require('../utils/ApiError');
+const { ApiError } = require('../utils/ApiError');
 
 const uploadFile = asyncHandler(async (req, res) => {
   const { folderId } = req.body;
