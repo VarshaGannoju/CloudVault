@@ -2,11 +2,16 @@ const express = require('express');
 
 const router = express.Router();
 
-router.use('/auth', require('./auth.routes'));
-router.use('/profile', require('./profile.routes'));
+const authRoutes = require('./auth.routes');
+const profileRoutes = require('./profile.routes');
+const folderRoutes = require('./folder.routes');
+const fileRoutes = require('./file.routes');
+
+router.use('/auth', authRoutes);
+router.use('/profile', profileRoutes);
+router.use('/folders', folderRoutes);
+router.use('/files', fileRoutes);
 // router.use('/users', require('./user.routes'));
-// router.use('/folders', require('./folder.routes'));
-// router.use('/files', require('./file.routes'));
 // router.use('/share', require('./share.routes'));
 // router.use('/admin', require('./admin.routes'));
 

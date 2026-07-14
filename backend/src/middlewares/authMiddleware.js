@@ -30,7 +30,10 @@ const requireAuth = asyncHandler(async (req, res, next) => {
 
     req.user = user;
     next();
-  } catch (_error) {
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      throw new ApiError(401, 'Not authorized, token expired');
+    }
     throw new ApiError(401, 'Not authorized, token failed');
   }
 });

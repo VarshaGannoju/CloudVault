@@ -1,5 +1,5 @@
 const multer = require('multer');
-const { ApiError } = require('../utils/ApiError');
+const ApiError = require('../utils/ApiError');
 
 // Store files in memory so they can be processed or uploaded to Cloudinary
 const storage = multer.memoryStorage();
@@ -20,4 +20,11 @@ const uploadAvatar = multer({
   },
 });
 
-module.exports = { uploadAvatar };
+const uploadFiles = multer({
+  storage,
+  limits: {
+    fileSize: 100 * 1024 * 1024, // 100MB limit per file
+  },
+});
+
+module.exports = { uploadAvatar, uploadFiles };
