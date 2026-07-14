@@ -24,7 +24,13 @@ const sendEmail = async (options) => {
     html: options.html,
   };
 
-  await transporter.sendMail(mailOptions);
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error('Failed to send email:', err.message);
+    console.error('Email contents:', mailOptions);
+    console.warn('NOTE: Registration/Forgot Password succeeded, but email delivery failed. Please check your SMTP configuration.');
+  }
 };
 
 const sendVerificationEmail = async (email, token) => {
