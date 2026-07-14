@@ -32,7 +32,23 @@ export default function SharedWithMe() {
     if (share.type === 'file') {
       try {
         const { data } = await api.get(`/share/files/${share.id}/download`);
-        window.open(data.data.url, '_blank');
+        const url = data.data.url;
+        
+        try {
+          const response = await fetch(url);
+          const blob = await response.blob();
+          const objUrl = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = objUrl;
+          a.download = share.original_name || 'download';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(objUrl);
+        } catch (fetchErr) {
+          console.error('Download failed via blob', fetchErr);
+          window.open(url, '_blank');
+        }
       } catch (err) {
         alert(err.response?.data?.message || 'Download failed');
       }

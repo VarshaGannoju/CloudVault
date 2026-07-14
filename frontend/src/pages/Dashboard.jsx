@@ -41,7 +41,21 @@ export default function Dashboard() {
   }, []);
 
   const handleDownload = async (file) => {
-    window.open(file.cloudinary_url, '_blank');
+    try {
+      const response = await fetch(file.cloudinary_url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.original_name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download failed via blob', err);
+      window.open(file.cloudinary_url, '_blank');
+    }
   };
 
   if (loading) return <Loading />;
