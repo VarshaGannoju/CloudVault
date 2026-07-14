@@ -40,6 +40,17 @@ export default function Folders() {
   const [itemToShare, setItemToShare] = useState(null);
   const [itemTypeToShare, setItemTypeToShare] = useState('folders');
 
+  // File actions
+  const [showFileRenameModal, setShowFileRenameModal] = useState(false);
+  const [fileToRename, setFileToRename] = useState(null);
+  const [fileNewName, setFileNewName] = useState('');
+
+  const [showFileDeleteModal, setShowFileDeleteModal] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState(null);
+
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [fileToPreview, setFileToPreview] = useState(null);
+
   const fetchContents = async () => {
     try {
       setLoading(true);
@@ -109,6 +120,51 @@ export default function Folders() {
     } catch (err) {
       console.error(err);
       toast.error('Failed to delete folder');
+    }
+  };
+
+  const handleDownload = async (file) => {
+    try {
+      const response = await fetch(file.cloudinary_url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.original_name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download failed via blob', err);
+      window.open(file.cloudinary_url, '_blank');
+    }
+  };
+
+  const handleRenameFile = async (e) => {
+    e.preventDefault();
+    if (!fileNewName.trim() || !fileToRename) return;
+    try {
+      await api.put(`/files/${fileToRename.id}`, { name: fileNewName.trim() });
+      setShowFileRenameModal(false);
+      toast.success('File renamed successfully');
+      fetchContents();
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to rename file');
+    }
+  };
+
+  const handleDeleteFile = async () => {
+    if (!fileToDelete) return;
+    try {
+      await api.delete(`/files/${fileToDelete.id}`);
+      setShowFileDeleteModal(false);
+      toast.success('File deleted successfully');
+      fetchContents();
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to delete file');
     }
   };
 
@@ -193,10 +249,10 @@ export default function Folders() {
                     <FileCard 
                       key={file.id} 
                       file={file} 
-                      onDownload={(f) => window.open(f.cloudinary_url, '_blank')}
-                      onRename={() => {}} // Usually file operations handled in Files page or here if needed
-                      onDelete={() => {}}
-                      onPreview={() => {}}
+                      onDownload={handleDownload}
+                      onRename={(f) => { setFileToRename(f); setFileNewName(f.original_name); setShowFileRenameModal(true); }}
+                      onDelete={(f) => { setFileToDelete(f); setShowFileDeleteModal(true); }}
+                      onPreview={(f) => { setFileToPreview(f); setShowPreviewModal(true); }}
                       onShare={(f) => { setItemToShare(f); setItemTypeToShare('files'); setShowShareModal(true); }}
                     />
                   ))}
@@ -288,6 +344,62 @@ export default function Folders() {
           itemType={itemTypeToShare} 
         />
       )}
+
+      {/* File Rename Modal */}
+      <Modal show={showFileRenameModal} onHide={() => setShowFileRenameModal(false)} centered>
+        <Form onSubmit={handleRenameFile}>
+          <Modal.Header closeButton className="border-0 pb-0">
+            <Modal.Title className="fs-5 fw-bold">Rename File</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form.Group>
+              <Form.Label className="fw-medium">New Name</Form.Label>
+              <Form.Control 
+                type="text" 
+                value={fileNewName} 
+                onChange={(e) => setFileNewName(e.target.value)} 
+                required 
+                autoFocus 
+              />
+            </Form.Group>
+          </Modal.Body>
+          <Modal.Footer className="border-0 pt-0">
+            <Button variant="light" onClick={() => setShowFileRenameModal(false)}>Cancel</Button>
+            <Button variant="primary" type="submit">Rename</Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
+
+      {/* File Delete Modal */}
+      <Modal show={showFileDeleteModal} onHide={() => setShowFileDeleteModal(false)} centered>
+        <Modal.Header closeButton className="border-0 pb-0">
+          <Modal.Title className="fs-5 fw-bold text-danger">Delete File</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to delete <span className="fw-bold">{fileToDelete?.original_name}</span>? This action cannot be undone.
+        </Modal.Body>
+        <Modal.Footer className="border-0 pt-0">
+          <Button variant="light" onClick={() => setShowFileDeleteModal(false)}>Cancel</Button>
+          <Button variant="danger" onClick={handleDeleteFile}>Delete</Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* File Preview Modal */}
+      <Modal show={showPreviewModal} onHide={() => setShowPreviewModal(false)} size="lg" centered>
+        <Modal.Header closeButton className="border-0">
+          <Modal.Title className="fs-5 fw-bold">{fileToPreview?.original_name}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="text-center p-0 bg-dark">
+          {fileToPreview && fileToPreview.mime_type.startsWith('image/') && (
+            <img 
+              src={fileToPreview.cloudinary_url} 
+              alt={fileToPreview.original_name} 
+              className="img-fluid w-100" 
+              style={{ maxHeight: '80vh', objectFit: 'contain' }}
+            />
+          )}
+        </Modal.Body>
+      </Modal>
 
     </div>
   );
