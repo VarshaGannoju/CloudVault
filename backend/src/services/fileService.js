@@ -27,7 +27,9 @@ const uploadFile = async (ownerId, file, folderId = null) => {
   const user = await userModel.findById(ownerId);
   if (!user) throw new ApiError(404, 'User not found');
   
-  if (user.storage_used_bytes + file.size > user.storage_limit_bytes) {
+  const usedBytes = Number(user.storage_used_bytes);
+  const limitBytes = Number(user.storage_limit_bytes);
+  if (usedBytes + file.size > limitBytes) {
     throw new ApiError(400, 'Storage limit exceeded');
   }
 
