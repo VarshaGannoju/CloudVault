@@ -35,7 +35,7 @@ const getUploadsOverTime = async (userId, days = 30) => {
   const text = `
     SELECT DATE(created_at) as date, COUNT(*) as upload_count, SUM(size_bytes) as total_size
     FROM files
-    WHERE owner_id = $1 AND created_at >= NOW() - INTERVAL '$2 days'
+    WHERE owner_id = $1 AND created_at >= NOW() - $2 * INTERVAL '1 day'
     GROUP BY DATE(created_at)
     ORDER BY DATE(created_at) ASC
   `;

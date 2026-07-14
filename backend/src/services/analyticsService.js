@@ -17,12 +17,12 @@ const getUserDashboardStats = async (userId) => {
 
   return {
     storage: {
-      used: parseInt(storageStats.storage_used_bytes, 10),
-      limit: parseInt(storageStats.storage_limit_bytes, 10),
+      used: parseInt(storageStats.storage_used_bytes || 0, 10),
+      limit: parseInt(storageStats.storage_limit_bytes || 5000000000, 10),
     },
     counts: {
       files: totalFiles,
-      folders: parseInt(folderStats.folder_count, 10),
+      folders: parseInt(folderStats.folder_count || 0, 10),
     },
     fileTypes: fileStats,
     recentUploads,
