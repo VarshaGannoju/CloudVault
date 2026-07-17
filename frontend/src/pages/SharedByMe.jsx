@@ -81,7 +81,7 @@ export default function SharedByMe() {
             <div className="text-muted mb-3" style={{ fontSize: '3rem' }}>
               <FiGlobe className="opacity-25" />
             </div>
-            <h5>You haven't shared anything yet</h5>
+            <h5>You haven&apos;t shared anything yet</h5>
             <p className="text-muted mb-4">Files and folders you share will appear here.</p>
             <Link to="/files" className="btn btn-primary px-4 rounded-pill">
               Browse Files to Share
