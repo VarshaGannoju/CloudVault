@@ -20,18 +20,20 @@ const getCloudinaryPdfPreviewUrl = (cloudinaryUrl) => {
 };
 
 export default function PreviewModal({ show, file, onClose, previewUrl }) {
-  if (!file) return null;
 
-  const { mime_type, original_name, cloudinary_url, shareId, id } = file;
-  const isImage = mime_type?.startsWith('image/');
-  const isPdf = mime_type === 'application/pdf';
-  const isVideo = mime_type?.startsWith('video/');
   const [pdfPreviewError, setPdfPreviewError] = useState(false);
   const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [pdfErrorMessage, setPdfErrorMessage] = useState(null);
   const [downloading, setDownloading] = useState(false);
+  if (!file) return null;
 
+  
+
+  const { mime_type, original_name, cloudinary_url, shareId, id } = file;
+  const isImage = mime_type?.startsWith('image/');
+  const isPdf = mime_type === 'application/pdf';
+  const isVideo = mime_type?.startsWith('video/');
   // Cloudinary JPG fallback for image-like first-page preview.
   const pdfPreviewImageUrl = getCloudinaryPdfPreviewUrl(cloudinary_url);
 

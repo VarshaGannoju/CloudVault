@@ -198,7 +198,7 @@ const createShare = asyncHandler(async (req, res) => {
 
   if (accessType === 'public') {
     let share;
-let isNew;
+     let isNew;
 
     if (itemType === 'file') {
       const existing = await shareModel.getPublicFileShareByFileId(itemId);
