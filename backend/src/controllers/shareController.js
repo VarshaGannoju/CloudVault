@@ -198,7 +198,7 @@ const createShare = asyncHandler(async (req, res) => {
 
   if (accessType === 'public') {
     let share;
-    let isNew = true;
+let isNew = true;
 
     if (itemType === 'file') {
       const existing = await shareModel.getPublicFileShareByFileId(itemId);
@@ -296,7 +296,7 @@ const createShare = asyncHandler(async (req, res) => {
 const getItemAccess = asyncHandler(async (req, res) => {
   const { itemType, itemId } = req.params;
 
-  let accessList = [];
+  let accessList;
   if (itemType === 'file' || itemType === 'files') {
     accessList = await shareModel.getSharesByFileId(itemId);
   } else if (itemType === 'folder' || itemType === 'folders') {
