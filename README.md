@@ -1,222 +1,496 @@
-# CloudVault ☁️
+# ☁️ CloudVault
 
-CloudVault is a secure, full-stack cloud storage and file-sharing platform, inspired by Google Drive and Dropbox. Built with a React (Vite) frontend and a Node.js/Express + PostgreSQL backend, following an MVC-style, enterprise-oriented architecture.
+A secure cloud storage web application that enables users to upload, organize, search, share, and manage files efficiently. CloudVault provides a modern interface with authentication, file versioning, analytics, folder management, and secure file sharing using Cloudinary and PostgreSQL.
 
-> **Status:** 🚧 Step 1 complete — project scaffolding, tooling, and infrastructure are in place. Features (auth, file management, sharing, etc.) are being built incrementally in subsequent steps.
-
----
-
-## Table of contents
-
-- [Architecture](#architecture)
-- [Tech stack](#tech-stack)
-- [Folder structure](#folder-structure)
-- [Getting started](#getting-started)
-- [Environment variables](#environment-variables)
-- [Running with Docker](#running-with-docker)
-- [Database](#database)
-- [Testing](#testing)
-- [CI/CD](#cicd)
-- [Roadmap](#roadmap)
+![React](https://img.shields.io/badge/React-19-blue?logo=react)
+![Node.js](https://img.shields.io/badge/Node.js-Express-green?logo=node.js)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-blue?logo=postgresql)
+![JWT](https://img.shields.io/badge/Auth-JWT-orange)
+![Cloudinary](https://img.shields.io/badge/Storage-Cloudinary-blue)
 
 ---
 
-## Architecture
+# 📖 Overview
 
-```
-┌────────────────┐        HTTPS/JSON        ┌─────────────────┐        SQL        ┌──────────────┐
-│  React (Vite)  │  <-------------------->   │  Express API    │ <--------------> │  PostgreSQL   │
-│  frontend      │                            │  (MVC layered)  │                   │              │
-└────────────────┘                            └─────────────────┘                   └──────────────┘
-                                                        │
-                                                        ▼
-                                                ┌─────────────────┐
-                                                │   Cloudinary     │
-                                                │ (file storage)   │
-                                                └─────────────────┘
-```
+CloudVault is a full-stack cloud storage platform where users can securely upload, organize, search, share, and manage files and folders.
 
-The backend follows a layered MVC structure:
+The application supports authentication, folder navigation, file versioning, analytics, favorites, recycle bin, activity tracking, and public file sharing through Cloudinary.
 
-- **routes** → define endpoints, delegate to controllers
-- **controllers** → parse requests, call services, shape responses
-- **services** → business logic, orchestrates models/external APIs
-- **models** → data access (SQL queries against PostgreSQL)
-- **middlewares** → auth guards, error handling, rate limiting
-- **validators** → request payload validation (`express-validator`)
-- **config** → environment, database, and Cloudinary configuration
-- **utils** → shared helpers (`ApiError`, `asyncHandler`, etc.)
+It provides an intuitive interface inspired by modern cloud storage platforms while ensuring secure access through JWT authentication.
 
-The frontend mirrors this separation of concerns:
+---
 
-- **pages** → route-level views
-- **components** → reusable, presentational UI pieces
-- **layouts** → shared page shells (navbar, sidebar, etc.)
-- **context** → global state (auth, theme)
-- **hooks** → reusable stateful logic
-- **services** → API client(s)
-- **utils** → formatting/helper functions
+# ❗ Problem Statement
 
-## Tech stack
+Traditional file storage methods often suffer from:
 
-| Layer          | Technology                                                         |
-| -------------- | -------------------------------------------------------------------|
-| Frontend       | React (Vite), React Router DOM, Axios, Bootstrap 5, React Icons    |
-| Backend        | Node.js, Express.js                                                 |
-| Database       | PostgreSQL                                                          |
-| Auth           | JWT (access + refresh tokens), bcrypt (bcryptjs)                    |
-| Storage        | Cloudinary                                                           |
-| Validation     | express-validator                                                    |
-| Security       | Helmet, CORS, rate limiting, secure cookies                         |
-| Testing        | Jest, Supertest                                                      |
-| Containers     | Docker, Docker Compose                                               |
-| CI/CD          | GitHub Actions                                                       |
+- Poor organization of files
+- Difficult file searching
+- Limited sharing capabilities
+- Risk of accidental deletion
+- Lack of version control
+- No centralized activity tracking
+- Security concerns with unauthorized access
 
-## Folder structure
+These issues make file management inefficient and reduce productivity.
 
-```
-CloudVault/
-├── backend/
-│   ├── src/
-│   │   ├── config/         # env, db, cloudinary config
-│   │   ├── controllers/    # request handlers
-│   │   ├── routes/         # Express routers
-│   │   ├── middlewares/    # error handling, auth, etc.
-│   │   ├── models/         # data access layer
-│   │   ├── services/       # business logic
-│   │   ├── utils/          # ApiError, asyncHandler, ...
-│   │   ├── validators/     # express-validator schemas
-│   │   ├── database/       # SQL migrations + migration runner
-│   │   └── app.js          # Express app assembly
-│   ├── tests/               # Jest + Supertest tests
-│   ├── server.js            # entry point
-│   ├── Dockerfile
-│   └── package.json
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── hooks/
-│   │   ├── services/        # axios API client
-│   │   ├── context/         # Auth & Theme context
-│   │   ├── layouts/
-│   │   └── utils/
-│   ├── Dockerfile
-│   ├── nginx.conf
-│   └── package.json
-├── .github/workflows/ci.yml
-├── docker-compose.yml
-└── README.md
-```
+---
 
-## Getting started
+# 💡 Solution
 
-### Prerequisites
+CloudVault addresses these challenges by providing a centralized cloud storage platform where users can:
 
-- Node.js 20+
-- PostgreSQL 16+ (or use Docker Compose, see below)
-- A free [Cloudinary](https://cloudinary.com) account (for file storage, added in a later step)
+- Securely upload files
+- Organize files into folders
+- Search files instantly
+- Share files using public links
+- Restore deleted files
+- Manage favorite files
+- Track recent activities
+- Maintain multiple file versions
+- View upload analytics
 
-### Backend
+---
 
-```bash
-cd backend
-cp .env.example .env   # fill in real values
-npm install
-npm run db:migrate     # applies SQL migrations
-npm run dev             # starts the API with nodemon on http://localhost:5000
-```
+# ✨ Features
 
-### Frontend
+### 🔐 Authentication
+- User Registration
+- Secure Login
+- JWT Authentication
+- Password Hashing using bcrypt
+- Email Verification
+- Protected Routes
 
-```bash
-cd frontend
-cp .env.example .env
-npm install
-npm run dev             # starts Vite dev server on http://localhost:5173
-```
+### 📁 File Management
+- Upload Files
+- Download Files
+- Rename Files
+- Delete Files
+- Restore Deleted Files
+- Permanent Delete
+- Search Files
+- Multiple File Upload
+- File Metadata Management
 
-## Environment variables
+### 📂 Folder Management
+- Create Folder
+- Rename Folder
+- Delete Folder
+- Nested Folder Support
+- Folder Navigation
 
-See [`backend/.env.example`](./backend/.env.example) and [`frontend/.env.example`](./frontend/.env.example) for the full list of variables. Key ones:
+### ⭐ Favorites
+- Star Files
+- Remove from Favorites
 
-| Variable                | Description                                  |
-| ------------------------| ----------------------------------------------|
-| `DATABASE_URL`           | PostgreSQL connection string                  |
-| `JWT_ACCESS_SECRET`      | Secret for signing short-lived access tokens  |
-| `JWT_REFRESH_SECRET`     | Secret for signing long-lived refresh tokens  |
-| `FILE_ENCRYPTION_KEY`    | 32-byte hex key for AES-256 file encryption   |
-| `CLOUDINARY_CLOUD_NAME`  | Cloudinary account cloud name                 |
-| `CLOUDINARY_API_KEY`     | Cloudinary API key                            |
-| `CLOUDINARY_API_SECRET`  | Cloudinary API secret                         |
-| `VITE_API_BASE_URL`      | (frontend) Base URL of the backend API        |
+### 🔗 File Sharing
+- Generate Public Share Links
+- Shared With Me
+- Shared By Me
+- Copy Share Link
+- Revoke Shared Access
 
-Generate strong secrets locally with:
+### 🗑️ Trash
+- Soft Delete
+- Restore Files
+- Permanent Delete
 
-```bash
-openssl rand -hex 32
-```
+### 📊 Dashboard
+- Upload Analytics
+- Weekly Upload Statistics
+- Average Uploads
+- Recent Activity
 
-## Running with Docker
+### 📜 Activity
+- Recent Uploads
+- Recently Modified
+- Recently Accessed Files
 
-```bash
-cp .env.example .env          # root-level compose variables
-cp backend/.env.example backend/.env   # fill in real secrets
-docker compose up --build
-```
+### 📝 Version Management
+- Upload New Versions
+- View Version History
+- Download Older Versions
 
-This starts three containers:
+### ☁️ Cloud Storage
+- Cloudinary Integration
+- Secure File URLs
 
-- `postgres` — PostgreSQL 16 with a persistent volume
-- `backend` — Express API on `:5000`
-- `frontend` — the production Vite build served by Nginx on `:5173`
+### 🛡️ Security
+- JWT Authentication
+- Password Encryption (bcrypt)
+- SQL Injection Protection using Parameterized Queries
+- Input Validation using Express Validator
+- Protected API Routes
+
+---
+
+# 🛠️ Tech Stack
+
+## Frontend
+
+- React
+- Vite
+- React Router
+- React Bootstrap
+- Axios
+- React Hot Toast
+- React Icons
+- CSS3
+
+## Backend
+
+- Node.js
+- Express.js
+- PostgreSQL
+- JWT
+- bcrypt
+- Express Validator
+- Multer
+- Cloudinary
+- dotenv
+- CORS
 
 ## Database
 
-Schema migrations live in [`backend/src/database/migrations`](./backend/src/database/migrations) and are applied with:
+- PostgreSQL
 
-```bash
-npm run db:migrate
-```
+## DevOps
 
-Core tables: `users`, `folders`, `files`, `file_versions`, `shared_files`, `activity_logs`, `password_reset_tokens`, `email_verification_tokens`.
+- Docker
+- Docker Compose
+- Nginx
 
 ## Testing
 
-```bash
-cd backend
-npm test          # Jest + Supertest
-```
-
-```bash
-cd frontend
-npm run lint       # ESLint
-npm run build      # production build sanity check
-```
-
-## CI/CD
-
-GitHub Actions ([`.github/workflows/ci.yml`](./.github/workflows/ci.yml)) runs on every push/PR to `main`/`develop`:
-
-1. Spins up a PostgreSQL service container
-2. Installs backend dependencies, lints, and runs Jest tests
-3. Installs frontend dependencies, lints, and builds the production bundle
-
-## Roadmap
-
-- [x] Project scaffolding, tooling, Docker, CI/CD
-- [ ] Authentication (register, login, JWT refresh, email verification, password reset)
-- [ ] User profile & role-based access control
-- [ ] Folder management (nested folders, breadcrumbs)
-- [ ] File management (upload, download, preview, star, trash/restore)
-- [ ] AES file encryption at rest
-- [ ] File versioning
-- [ ] File sharing (public links, permissions, expiry)
-- [ ] Search
-- [ ] Dashboard analytics & charts
-- [ ] Admin panel
-- [ ] Dark mode & polished UI
+- Jest
 
 ---
 
-*Screenshots, a full API reference, and a deployment guide will be added as those pieces are built out.*
+# 📂 Project Structure
+
+```
+CloudVault/
+
+├── .github/
+├── .vscode/
+│
+├── backend/
+│   ├── src/
+│   │   ├── config/
+│   │   ├── controllers/
+│   │   ├── database/
+│   │   ├── middlewares/
+│   │   ├── models/
+│   │   ├── routes/
+│   │   ├── services/
+│   │   ├── utils/
+│   │   ├── validators/
+│   │   └── app.js
+│   │
+│   ├── tests/
+│   ├── .env.example
+│   ├── Dockerfile
+│   ├── package.json
+│   └── server.js
+│
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   │   ├── assets/
+│   │   ├── components/
+│   │   ├── context/
+│   │   ├── hooks/
+│   │   ├── layouts/
+│   │   ├── pages/
+│   │   ├── services/
+│   │   ├── utils/
+│   │   ├── App.jsx
+│   │   ├── main.jsx
+│   │   └── index.css
+│   │
+│   ├── .env.example
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   ├── package.json
+│   └── vite.config.js
+│
+├── screenshots/
+│   ├── login.png
+│   ├── register.png
+│   ├── dashboard.png
+│   ├── dashboard2.png
+│   ├── files.png
+│   ├── folders.png
+│   ├── shared-files.png
+│   ├── shared-with-me.png
+│   ├── shared-by-me.png
+│   ├── recent.png
+│   ├── starred.png
+│   ├── trash.png
+│   ├── activity.png
+│   ├── preview.png
+│   └── share-file.png
+│
+├── docker-compose.yml
+├── README.md
+└── .gitignore
+
+```
+
+---
+
+# 📸 Screenshots
+
+## 🔐 Login Page
+
+![Login Page](screenshots/login.png)
+
+---
+
+### 📝 Register Page
+
+![Register Page](screenshots/register.png)
+
+---
+
+## 📊 Dashboard
+
+![Dashboard Page](screenshots/dashboard.png)
+
+![Dashboard Page](screenshots/dashboard2.png)
+
+---
+
+## 📂 Folder Management
+
+![Folders](screenshots/folders.png)
+
+---
+
+## 📄 All Files
+
+![Files](screenshots/files.png)
+
+---
+
+## ⭐ Favorites
+
+![Starred](screenshots/starred.png)
+
+---
+
+### 🤝 Shared With Me
+
+![Shared With Me](screenshots/shared-with-me.png)
+
+---
+
+### 📤 Shared By Me
+
+![Shared By Me](screenshots/shared-by-me.png)
+
+---
+
+## 🔗 Share File
+
+![Share File](screenshots/share-file.png)
+
+---
+
+### 🕒 Recent Files
+
+![Recent](screenshots/recent.png)
+
+---
+
+### 👁️ File Preview
+
+![Preview](screenshots/preview.png)
+
+---
+
+## 🗑️ Trash
+
+![Trash](screenshots/trash.png)
+
+---
+
+## 📈 Activity
+
+![Activity](screenshots/activity.png)
+
+---
+
+# ⚙️ Installation
+
+## Clone Repository
+
+```bash
+git clone https://github.com/yourusername/cloudvault.git
+
+cd cloudvault
+```
+
+---
+
+# Backend Setup
+
+```bash
+cd backend
+
+npm install
+
+npm run dev
+```
+
+---
+
+# Frontend Setup
+
+```bash
+cd frontend
+
+npm install
+
+npm run dev
+```
+
+---
+
+# Environment Variables
+
+## Backend (.env)
+
+```env
+PORT=5000
+
+DATABASE_URL=your_postgresql_connection
+
+JWT_SECRET=your_secret_key
+
+JWT_EXPIRES_IN=7d
+
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+
+CLOUDINARY_API_KEY=your_api_key
+
+CLOUDINARY_API_SECRET=your_api_secret
+```
+
+---
+
+# Run Application
+
+Backend
+
+```
+http://localhost:5000
+```
+
+Frontend
+
+```
+http://localhost:5173
+```
+
+---
+
+# 🔐 Authentication Flow
+
+1. User registers.
+2. Email verification is completed.
+3. Password is hashed using bcrypt.
+4. JWT token is generated.
+5. Protected APIs validate JWT.
+6. Users access only their own files and folders.
+
+---
+
+# 🛡️ Security Features
+
+- JWT Authentication
+- Password Hashing using bcrypt
+- SQL Injection Protection using Parameterized Queries
+- Express Validator Input Validation
+- Secure Cloudinary File Storage
+- Protected API Routes
+- Authorization Middleware
+
+---
+
+# 🚀 Future Enhancements
+
+- Forgot Password
+- Two-Factor Authentication (2FA)
+- File Compression
+- Folder Sharing
+- Dark Mode
+- Mobile Application
+- AI File Tagging
+
+---
+
+# 📚 Learning Outcomes
+
+This project strengthened my understanding of:
+
+- Full Stack Web Development
+- React Application Development
+- Express.js REST APIs
+- PostgreSQL Database Design
+- JWT Authentication
+- Secure Password Hashing
+- Cloudinary Integration
+- Docker Containerization
+- File Upload Management
+- File Versioning
+- Database Relationships
+- Search & Pagination
+- REST API Design
+- Secure Backend Development
+
+---
+
+# 🤝 Contributing
+
+Contributions are welcome.
+
+1. Fork the repository.
+2. Create a feature branch.
+
+```bash
+git checkout -b feature-name
+```
+
+3. Commit your changes.
+
+```bash
+git commit -m "Add new feature"
+```
+
+4. Push the branch.
+
+```bash
+git push origin feature-name
+```
+
+5. Open a Pull Request.
+
+---
+
+# 👩‍💻 Author
+
+**Varsha Gannoju**
+
+GitHub: https://github.com/VarshaGannoju
+
+LinkedIn: https://www.linkedin.com/in/varsha-gannoju-481780362/
+
+---
+
+# ⭐ Support
+
+If you found this project helpful, please consider giving it a ⭐ on GitHub.
+
+Made with using React, Node.js, Express.js, PostgreSQL, and Cloudinary.

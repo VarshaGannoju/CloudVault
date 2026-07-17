@@ -80,7 +80,7 @@ export default function Register() {
                 type="text"
                 name="name"
                 className="bg-light border-start-0 ps-0"
-                placeholder="John Doe"
+                placeholder="Enter your name"
                 value={formData.name}
                 onChange={handleChange}
                 disabled={loading || success}
@@ -98,7 +98,7 @@ export default function Register() {
                 type="email"
                 name="email"
                 className="bg-light border-start-0 ps-0"
-                placeholder="name@example.com"
+                placeholder="Enter your email"
                 value={formData.email}
                 onChange={handleChange}
                 disabled={loading || success}
