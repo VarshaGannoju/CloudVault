@@ -1,4 +1,4 @@
-const ApiError = require('../src/utils/ApiError');
+const { ApiError } = require('../src/utils/ApiError');
 const asyncHandler = require('../src/utils/asyncHandler');
 
 describe('ApiError', () => {

@@ -10,6 +10,7 @@ import UploadModal from '../components/UploadModal';
 import ShareModal from '../components/ShareModal';
 import { Modal, Button, Form } from 'react-bootstrap';
 import toast from 'react-hot-toast';
+import { downloadFileProxy } from '../utils/downloadHelper';
 
 export default function Folders() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -124,21 +125,7 @@ export default function Folders() {
   };
 
   const handleDownload = async (file) => {
-    try {
-      const response = await fetch(file.cloudinary_url);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = file.original_name;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('Download failed via blob', err);
-      window.open(file.cloudinary_url, '_blank');
-    }
+    await downloadFileProxy(`/files/${file.id}/download`, file.original_name);
   };
 
   const handleRenameFile = async (e) => {

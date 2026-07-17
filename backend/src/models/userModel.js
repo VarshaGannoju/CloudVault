@@ -9,7 +9,8 @@ const createUser = async (name, email, password_hash) => {
 };
 
 const findByEmail = async (email) => {
-  const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+  if (!email) return null;
+  const result = await db.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1)', [email.trim()]);
   return result.rows[0];
 };
 

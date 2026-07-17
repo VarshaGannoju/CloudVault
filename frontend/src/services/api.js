@@ -30,12 +30,18 @@ function resolvePending(token) {
   pendingRequests = [];
 }
 
+// Endpoints that should NEVER trigger the refresh-retry flow below.
+// A 401 from /auth/login (wrong credentials) or /auth/register is a normal,
+// expected failure — not a sign that the access token expired mid-session.
+const AUTH_ENDPOINTS = ['/auth/login', '/auth/register', '/auth/refresh-token'];
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    const isAuthEndpoint = AUTH_ENDPOINTS.some((path) => originalRequest?.url?.includes(path));
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       if (isRefreshing) {
         return new Promise((resolve) => {
           pendingRequests.push((token) => {
@@ -50,7 +56,7 @@ api.interceptors.response.use(
 
       try {
         const { data } = await axios.post(
-          `${API_BASE_URL}/auth/refresh`,
+          `${API_BASE_URL}/auth/refresh-token`,
           {},
           { withCredentials: true }
         );
@@ -72,3 +78,4 @@ api.interceptors.response.use(
 );
 
 export default api;
+export { API_BASE_URL };

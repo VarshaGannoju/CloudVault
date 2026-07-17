@@ -6,7 +6,10 @@ const getUserDashboardStats = async (userId) => {
   const storageStats = await analyticsModel.getUserStorageStats(userId);
   const folderStats = await analyticsModel.getUserFolderStats(userId);
   const fileStats = await analyticsModel.getUserFileStatsByType(userId);
-  
+  const sharedCount = await analyticsModel.countSharedFiles(userId);
+  const starredCount = await analyticsModel.countStarredFiles(userId);
+  const recentActivity = await analyticsModel.getRecentActivity(userId, 5);
+
   const recentUploads = await activityModel.getRecentUploads(userId, 5);
   const recentDownloads = await activityModel.getRecentDownloads(userId, 5);
 
@@ -23,15 +26,18 @@ const getUserDashboardStats = async (userId) => {
     counts: {
       files: totalFiles,
       folders: parseInt(folderStats.folder_count || 0, 10),
+      shared: sharedCount,
+      starred: starredCount,
     },
     fileTypes: fileStats,
     recentUploads,
     recentDownloads,
+    recentActivity,
   };
 };
 
 const getUserAnalyticsCharts = async (userId) => {
-  const uploadsOverTime = await analyticsModel.getUploadsOverTime(userId, 30);
+  const uploadsOverTime = await analyticsModel.getUploadsOverTime(userId);
   return {
     uploadsOverTime,
   };

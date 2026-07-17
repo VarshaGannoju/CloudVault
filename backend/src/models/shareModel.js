@@ -53,15 +53,88 @@ const getFolderShareById = async (id) => {
 };
 
 const getFileShareByToken = async (token) => {
-  const text = `SELECT sf.*, f.original_name, f.cloudinary_url, f.mime_type, f.size_bytes FROM shared_files sf JOIN files f ON sf.file_id = f.id WHERE sf.public_token = $1`;
+  const text = `
+    SELECT sf.*, f.original_name, f.cloudinary_url, f.mime_type, f.size_bytes
+    FROM shared_files sf
+    JOIN files f ON sf.file_id = f.id
+    WHERE sf.public_token = $1
+      AND sf.shared_with IS NULL
+      AND sf.public_token IS NOT NULL
+      AND f.is_deleted = FALSE
+  `;
   const { rows } = await query(text, [token]);
   return rows[0];
 };
 
 const getFolderShareByToken = async (token) => {
-  const text = `SELECT sf.*, f.name FROM shared_folders sf JOIN folders f ON sf.folder_id = f.id WHERE sf.public_token = $1`;
+  const text = `
+    SELECT sf.*, f.name
+    FROM shared_folders sf
+    JOIN folders f ON sf.folder_id = f.id
+    WHERE sf.public_token = $1
+      AND sf.shared_with IS NULL
+      AND sf.public_token IS NOT NULL
+  `;
   const { rows } = await query(text, [token]);
   return rows[0];
+};
+
+const getPublicFileShareByFileId = async (fileId) => {
+  const text = `
+    SELECT sf.*
+    FROM shared_files sf
+    JOIN files f ON sf.file_id = f.id
+    WHERE sf.file_id = $1
+      AND sf.shared_with IS NULL
+      AND sf.public_token IS NOT NULL
+      AND f.is_deleted = FALSE
+    ORDER BY sf.created_at ASC
+    LIMIT 1
+  `;
+  const { rows } = await query(text, [fileId]);
+  return rows[0];
+};
+
+const getPublicFolderShareByFolderId = async (folderId) => {
+  const text = `
+    SELECT sf.*
+    FROM shared_folders sf
+    WHERE sf.folder_id = $1
+      AND sf.shared_with IS NULL
+      AND sf.public_token IS NOT NULL
+    ORDER BY sf.created_at ASC
+    LIMIT 1
+  `;
+  const { rows } = await query(text, [folderId]);
+  return rows[0];
+};
+
+const deletePublicFileShareByFileId = async (fileId, ownerId) => {
+  const text = `
+    DELETE FROM shared_files sf
+    USING files f
+    WHERE sf.file_id = f.id
+      AND sf.file_id = $1
+      AND sf.shared_with IS NULL
+      AND sf.public_token IS NOT NULL
+      AND (sf.shared_by = $2 OR f.owner_id = $2)
+  `;
+  const { rowCount } = await query(text, [fileId, ownerId]);
+  return rowCount > 0;
+};
+
+const deletePublicFolderShareByFolderId = async (folderId, ownerId) => {
+  const text = `
+    DELETE FROM shared_folders sf
+    USING folders f
+    WHERE sf.folder_id = f.id
+      AND sf.folder_id = $1
+      AND sf.shared_with IS NULL
+      AND sf.public_token IS NOT NULL
+      AND (sf.shared_by = $2 OR f.owner_id = $2)
+  `;
+  const { rowCount } = await query(text, [folderId, ownerId]);
+  return rowCount > 0;
 };
 
 const incrementFileShareView = async (id) => {
@@ -97,42 +170,80 @@ const deleteFolderShare = async (id, ownerId) => {
 
 const getSharesByUser = async (userId) => {
   const filesQuery = `
-    SELECT sf.id, sf.file_id as target_id, 'file' as type, f.original_name as target_name, 
-           sf.shared_with, sf.public_token, sf.permission, sf.expires_at, sf.created_at, sf.views, u.name as shared_with_name, u.email as shared_with_email
+    SELECT sf.id, sf.file_id as target_id, 'file' as type, f.original_name as target_name,
+           sf.shared_with, sf.public_token, sf.permission, sf.expires_at, sf.created_at, sf.views,
+           u.name as shared_with_name, u.email as shared_with_email
     FROM shared_files sf
     JOIN files f ON sf.file_id = f.id
     LEFT JOIN users u ON sf.shared_with = u.id
     WHERE sf.shared_by = $1
+      AND f.is_deleted = FALSE
+      AND (
+        sf.shared_with IS NOT NULL
+        OR (
+          sf.public_token IS NOT NULL
+          AND sf.id = (
+            SELECT sf2.id
+            FROM shared_files sf2
+            WHERE sf2.file_id = sf.file_id
+              AND sf2.shared_by = $1
+              AND sf2.shared_with IS NULL
+              AND sf2.public_token IS NOT NULL
+            ORDER BY sf2.created_at ASC
+            LIMIT 1
+          )
+        )
+      )
   `;
   const foldersQuery = `
-    SELECT sf.id, sf.folder_id as target_id, 'folder' as type, f.name as target_name, 
-           sf.shared_with, sf.public_token, sf.permission, sf.expires_at, sf.created_at, sf.views, u.name as shared_with_name, u.email as shared_with_email
+    SELECT sf.id, sf.folder_id as target_id, 'folder' as type, f.name as target_name,
+           sf.shared_with, sf.public_token, sf.permission, sf.expires_at, sf.created_at, sf.views,
+           u.name as shared_with_name, u.email as shared_with_email
     FROM shared_folders sf
     JOIN folders f ON sf.folder_id = f.id
     LEFT JOIN users u ON sf.shared_with = u.id
     WHERE sf.shared_by = $1
+      AND (
+        sf.shared_with IS NOT NULL
+        OR (
+          sf.public_token IS NOT NULL
+          AND sf.id = (
+            SELECT sf2.id
+            FROM shared_folders sf2
+            WHERE sf2.folder_id = sf.folder_id
+              AND sf2.shared_by = $1
+              AND sf2.shared_with IS NULL
+              AND sf2.public_token IS NOT NULL
+            ORDER BY sf2.created_at ASC
+            LIMIT 1
+          )
+        )
+      )
   `;
   const [filesRes, foldersRes] = await Promise.all([
     query(filesQuery, [userId]),
     query(foldersQuery, [userId])
   ]);
-  
-  return [...filesRes.rows, ...foldersRes.rows].sort((a, b) => b.created_at - a.created_at);
+
+  return [...filesRes.rows, ...foldersRes.rows].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 };
 
 const getSharedWithUser = async (userId) => {
   // Get private shares where shared_with = userId
   const filesQuery = `
     SELECT sf.id, sf.file_id as target_id, 'file' as type, f.original_name as target_name, 
+           f.mime_type, f.size_bytes, f.cloudinary_url,
            sf.shared_by, sf.permission, sf.expires_at, sf.created_at, u.name as shared_by_name, u.email as shared_by_email
     FROM shared_files sf
     JOIN files f ON sf.file_id = f.id
     JOIN users u ON sf.shared_by = u.id
     WHERE sf.shared_with = $1
+      AND f.is_deleted = FALSE
       AND (sf.expires_at IS NULL OR sf.expires_at > NOW())
   `;
   const foldersQuery = `
     SELECT sf.id, sf.folder_id as target_id, 'folder' as type, f.name as target_name, 
+           NULL as mime_type, NULL as size_bytes, NULL as cloudinary_url,
            sf.shared_by, sf.permission, sf.expires_at, sf.created_at, u.name as shared_by_name, u.email as shared_by_email
     FROM shared_folders sf
     JOIN folders f ON sf.folder_id = f.id
@@ -146,6 +257,79 @@ const getSharedWithUser = async (userId) => {
   ]);
 
   return [...filesRes.rows, ...foldersRes.rows].sort((a, b) => b.created_at - a.created_at);
+};
+
+const getSharesByFileId = async (fileId) => {
+  const text = `
+    SELECT sf.id, sf.permission, sf.public_token, sf.created_at, u.name as shared_with_name, u.email as shared_with_email
+    FROM shared_files sf
+    LEFT JOIN users u ON sf.shared_with = u.id
+    JOIN files f ON sf.file_id = f.id
+    WHERE sf.file_id = $1 AND f.is_deleted = FALSE
+    ORDER BY sf.public_token IS NULL DESC, sf.created_at ASC
+  `;
+  const { rows } = await query(text, [fileId]);
+  return rows;
+};
+
+const getSharesByFolderId = async (folderId) => {
+  const text = `
+    SELECT sf.id, sf.permission, sf.public_token, sf.created_at, u.name as shared_with_name, u.email as shared_with_email
+    FROM shared_folders sf
+    LEFT JOIN users u ON sf.shared_with = u.id
+    WHERE sf.folder_id = $1
+    ORDER BY sf.public_token IS NULL DESC, sf.created_at ASC
+  `;
+  const { rows } = await query(text, [folderId]);
+  return rows;
+};
+
+const checkDuplicateFileShare = async (fileId, sharedWith) => {
+  const text = `SELECT id FROM shared_files WHERE file_id = $1 AND shared_with = $2`;
+  const { rowCount } = await query(text, [fileId, sharedWith]);
+  return rowCount > 0;
+};
+
+const checkDuplicateFolderShare = async (folderId, sharedWith) => {
+  const text = `SELECT id FROM shared_folders WHERE folder_id = $1 AND shared_with = $2`;
+  const { rowCount } = await query(text, [folderId, sharedWith]);
+  return rowCount > 0;
+};
+
+const updateFileSharePermission = async (shareId, ownerId, permission) => {
+  const text = `
+    UPDATE shared_files sf
+    SET permission = $1
+    FROM files f
+    WHERE sf.file_id = f.id AND sf.id = $2 AND (sf.shared_by = $3 OR f.owner_id = $3)
+    RETURNING sf.*
+  `;
+  const { rows } = await query(text, [permission, shareId, ownerId]);
+  return rows[0];
+};
+
+const updateFolderSharePermission = async (shareId, ownerId, permission) => {
+  const text = `
+    UPDATE shared_folders sf
+    SET permission = $1
+    FROM folders f
+    WHERE sf.folder_id = f.id AND sf.id = $2 AND (sf.shared_by = $3 OR f.owner_id = $3)
+    RETURNING sf.*
+  `;
+  const { rows } = await query(text, [permission, shareId, ownerId]);
+  return rows[0];
+};
+
+const checkUserAccessToFile = async (fileId, userId) => {
+  const text = `
+    SELECT permission 
+    FROM shared_files 
+    WHERE file_id = $1 AND shared_with = $2 
+      AND (expires_at IS NULL OR expires_at > NOW())
+    LIMIT 1
+  `;
+  const { rows } = await query(text, [fileId, userId]);
+  return rows[0];
 };
 
 module.exports = {
@@ -155,10 +339,21 @@ module.exports = {
   getFolderShareById,
   getFileShareByToken,
   getFolderShareByToken,
+  getPublicFileShareByFileId,
+  getPublicFolderShareByFolderId,
+  deletePublicFileShareByFileId,
+  deletePublicFolderShareByFolderId,
   incrementFileShareView,
   incrementFolderShareView,
   deleteFileShare,
   deleteFolderShare,
   getSharesByUser,
   getSharedWithUser,
+  getSharesByFileId,
+  getSharesByFolderId,
+  checkDuplicateFileShare,
+  checkDuplicateFolderShare,
+  updateFileSharePermission,
+  updateFolderSharePermission,
+  checkUserAccessToFile,
 };

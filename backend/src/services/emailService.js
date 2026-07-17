@@ -51,6 +51,7 @@ const sendPasswordResetEmail = async (email, token) => {
   const resetUrl = `${env.CLIENT_URL}/reset-password?token=${token}`;
   
   const message = `Please click the following link to reset your password: \n\n ${resetUrl}\n\nIf you did not request this, please ignore this email.`;
+  
   const html = `<p>Please click the following link to reset your password:</p> <a href="${resetUrl}">Reset Password</a><p>If you did not request this, please ignore this email.</p>`;
 
   await sendEmail({

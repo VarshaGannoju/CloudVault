@@ -80,7 +80,44 @@ const deleteFile = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     success: true,
-    message: 'File deleted successfully',
+    message: 'File moved to trash',
+  });
+});
+
+const restoreFile = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const ownerId = req.user.id;
+
+  const restored = await fileService.restoreFile(id, ownerId);
+
+  res.status(200).json({
+    success: true,
+    data: restored,
+    message: 'File restored successfully',
+  });
+});
+
+const permanentDeleteFile = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const ownerId = req.user.id;
+
+  await fileService.permanentDeleteFile(id, ownerId);
+
+  res.status(200).json({
+    success: true,
+    message: 'File permanently deleted',
+  });
+});
+
+const getTrashFiles = asyncHandler(async (req, res) => {
+  const ownerId = req.user.id;
+  const { page, limit } = req.query;
+
+  const result = await fileService.getTrashFiles(ownerId, page, limit);
+
+  res.status(200).json({
+    success: true,
+    ...result,
   });
 });
 
@@ -96,6 +133,172 @@ const previewFile = asyncHandler(async (req, res) => {
   });
 });
 
+const https = require('https');
+
+const downloadFile = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+
+  const file = await fileService.downloadFile(id, userId);
+
+  res.setHeader('Content-Disposition', `attachment; filename="${file.original_name}"`);
+  res.setHeader('Content-Type', file.mime_type || 'application/octet-stream');
+
+  https.get(file.cloudinary_url, (stream) => {
+    stream.pipe(res);
+  }).on('error', (err) => {
+    console.error('Error downloading from Cloudinary:', err);
+    res.status(500).json({ success: false, message: 'Failed to download file' });
+  });
+});
+
+const streamFile = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+
+  const file = await fileService.getFileForStream(id, userId);
+
+  res.setHeader('Content-Type', file.mime_type || 'application/octet-stream');
+  res.setHeader('Content-Disposition', `inline; filename="${file.original_name}"`);
+
+  https.get(file.cloudinary_url, (stream) => {
+    stream.pipe(res);
+  }).on('error', (err) => {
+    console.error('Error streaming from Cloudinary:', err);
+    res.status(500).json({ success: false, message: 'Failed to stream file' });
+  });
+});
+
+const copyFile = asyncHandler(async (req, res) => {
+  const { fileId } = req.params;
+  const { folderId } = req.body;
+  const userId = req.user.id;
+
+  const copied = await fileService.makeCopy(fileId, userId, folderId);
+
+  res.status(201).json({
+    success: true,
+    data: copied,
+    message: 'File copied successfully',
+  });
+});
+
+const starFile = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+
+  await fileService.starFile(id, userId);
+
+  res.status(200).json({
+    success: true,
+    message: 'File starred',
+  });
+});
+
+const unstarFile = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+
+  await fileService.unstarFile(id, userId);
+
+  res.status(200).json({
+    success: true,
+    message: 'File unstarred',
+  });
+});
+
+const getStarredFiles = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const { page, limit } = req.query;
+
+  const result = await fileService.getStarredFiles(userId, page, limit);
+
+  res.status(200).json({
+    success: true,
+    ...result,
+  });
+});
+
+const getRecentFiles = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+
+  const result = await fileService.getRecentFiles(userId);
+
+  res.status(200).json({
+    success: true,
+    data: result,
+  });
+});
+
+const uploadNewVersion = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+
+  if (!req.file) {
+    throw new ApiError(400, 'No file provided');
+  }
+
+  const updated = await fileService.uploadNewVersion(id, userId, req.file);
+
+  res.status(200).json({
+    success: true,
+    data: updated,
+    message: 'New version uploaded',
+  });
+});
+
+const getFileVersions = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+  const { page, limit } = req.query;
+
+  const result = await fileService.getFileVersions(id, userId, page, limit);
+
+  res.status(200).json({
+    success: true,
+    ...result,
+  });
+});
+
+const restoreVersion = asyncHandler(async (req, res) => {
+  const { id, versionId } = req.params;
+  const userId = req.user.id;
+
+  const restored = await fileService.restoreVersion(id, versionId, userId);
+
+  res.status(200).json({
+    success: true,
+    data: restored,
+    message: 'Version restored successfully',
+  });
+});
+
+// One-off admin utility: GET /files/fix-mime-types           -> dry run
+//                        GET /files/fix-mime-types?apply=true -> applies fix
+const fixMimeTypes = asyncHandler(async (req, res) => {
+  const apply = req.query.apply === 'true';
+  const result = await fileService.fixAllMimeTypes(apply);
+
+  res.status(200).json({
+    success: true,
+    mode: apply ? 'applied' : 'dry-run',
+    ...result,
+  });
+});
+
+// One-off admin utility: GET /files/reconcile-storage           -> dry run
+//                        GET /files/reconcile-storage?apply=true -> applies fix
+const reconcileStorage = asyncHandler(async (req, res) => {
+  const apply = req.query.apply === 'true';
+  const result = await fileService.reconcileStorage(apply);
+
+  res.status(200).json({
+    success: true,
+    mode: apply ? 'applied' : 'dry-run',
+    ...result,
+  });
+});
+
 module.exports = {
   uploadFile,
   uploadMultipleFiles,
@@ -103,5 +306,20 @@ module.exports = {
   searchFiles,
   renameFile,
   deleteFile,
+  restoreFile,
+  permanentDeleteFile,
+  getTrashFiles,
   previewFile,
+  downloadFile,
+  streamFile,
+  copyFile,
+  starFile,
+  unstarFile,
+  getStarredFiles,
+  getRecentFiles,
+  uploadNewVersion,
+  getFileVersions,
+  restoreVersion,
+  fixMimeTypes,
+  reconcileStorage,
 };

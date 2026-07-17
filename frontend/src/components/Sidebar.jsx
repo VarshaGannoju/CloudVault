@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { FiHome, FiFileText, FiFolder, FiUser, FiShare2, FiSettings } from 'react-icons/fi';
+import { FiHome, FiFileText, FiFolder, FiUser, FiShare2, FiSettings, FiStar, FiClock, FiTrash2 } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 
 export default function Sidebar({ isOpen, onClose: _onClose }) {
@@ -24,8 +24,23 @@ export default function Sidebar({ isOpen, onClose: _onClose }) {
         <NavLink to="/folders" className="nav-link">
           <FiFolder /> Folders
         </NavLink>
+        <NavLink to="/recent" className="nav-link">
+          <FiClock /> Recent
+        </NavLink>
+        <NavLink to="/starred" className="nav-link">
+          <FiStar /> Starred
+        </NavLink>
         <NavLink to="/shared" className="nav-link">
           <FiShare2 /> Shared With Me
+        </NavLink>
+        <NavLink to="/shared-by-me" className="nav-link">
+          <FiShare2 /> Shared By Me
+        </NavLink>
+        <NavLink to="/trash" className="nav-link">
+          <FiTrash2 /> Trash
+        </NavLink>
+        <NavLink to="/activity" className="nav-link">
+          <FiClock /> Activity
         </NavLink>
         <NavLink to="/profile" className="nav-link">
           <FiUser /> Profile
