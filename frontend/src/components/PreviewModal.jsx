@@ -26,11 +26,13 @@ export default function PreviewModal({ show, file, onClose, previewUrl }) {
   const [pdfLoading, setPdfLoading] = useState(false);
   const [pdfErrorMessage, setPdfErrorMessage] = useState(null);
   const [downloading, setDownloading] = useState(false);
-  if (!file) return null;
+ 
 
-  
-
-  const { mime_type, original_name, cloudinary_url, shareId, id } = file;
+  const mime_type = file?.mime_type;
+const original_name = file?.original_name;
+const cloudinary_url = file?.cloudinary_url;
+const shareId = file?.shareId;
+const id = file?.id;
   const isImage = mime_type?.startsWith('image/');
   const isPdf = mime_type === 'application/pdf';
   const isVideo = mime_type?.startsWith('video/');
@@ -78,6 +80,7 @@ export default function PreviewModal({ show, file, onClose, previewUrl }) {
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [show, isPdf, previewUrl]);
+  if (!file) return null;
 
   const handleDownloadClick = async () => {
     // Prefer the shareId-based backend proxy route (forces correct filename + same-origin download).
