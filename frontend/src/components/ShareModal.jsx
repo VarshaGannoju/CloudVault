@@ -24,7 +24,14 @@ export default function ShareModal({ show, onHide, item, itemType }) {
 
   const searchTimeoutRef = useRef(null);
 
+  // normalizedItemType is singular ('file' / 'folder') — used for the generic
+  // /share/item/:itemType/:itemId/access endpoint, which expects singular.
   const normalizedItemType = itemType === 'files' ? 'file' : 'folder';
+
+  // pluralItemType is used for the DELETE endpoints, which are registered on
+  // the backend as /share/files/:id and /share/folders/:id (plural).
+  const pluralItemType = normalizedItemType === 'file' ? 'files' : 'folders';
+
   const isPublicEnabled = !!publicShare?.public_token;
   const publicLink = isPublicEnabled ? buildPublicShareUrl(publicShare.public_token) : '';
 
@@ -137,7 +144,7 @@ export default function ShareModal({ show, onHide, item, itemType }) {
 
   const handleRemoveAccess = async (shareId) => {
     try {
-      await api.delete(`/share/${normalizedItemType}/${shareId}`);
+      await api.delete(`/share/${pluralItemType}/${shareId}`);
       toast.success('Access removed');
       fetchAccessList();
     } catch (err) {
@@ -170,7 +177,7 @@ export default function ShareModal({ show, onHide, item, itemType }) {
 
     try {
       setPublicLoading(true);
-      await api.delete(`/share/${normalizedItemType}/${publicShare.id}`);
+      await api.delete(`/share/${pluralItemType}/${publicShare.id}`);
       toast.success('Public access disabled');
       await fetchAccessList();
     } catch (err) {
